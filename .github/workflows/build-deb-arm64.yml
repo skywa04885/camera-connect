@@ -23,8 +23,11 @@ jobs:
             build-essential \
             devscripts \
             debhelper \
-            fakeroot \
+            fakeroot
+      - name: Install uv
+        run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Ensure build script is executable
         run: chmod +x ./build_deb.sh
