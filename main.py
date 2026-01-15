@@ -9,7 +9,7 @@ import evdev
 import signal
 import logging
 from config import SPOOL_PATH, WEBCAM_URL
-from glideapi import start_upload, upload, complete, mutate_table
+from glide_api import start_upload, upload, complete, mutate_table
 
 def upload_snapshots(shutdown: Event) -> None:
     logger = logging.getLogger('Snapshot uploader')
@@ -120,6 +120,10 @@ def main() -> None:
             shutdown.set()
 
     signal.signal(signal.SIGINT, signal_handler)
+
+    snapshot_uploader_thread.join()
+    snapshot_taker_thread.join()
+    keyboard_listener_thread.join()
 
 
 if __name__ == '__main__':

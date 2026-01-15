@@ -1,35 +1,33 @@
 import logging
 from pathlib import Path
-from typing import Literal, Annotated, Optional, Any
+from typing import Any
 from datetime import datetime, timezone
-from config import GLIDE_API_KEY, GLIDE_APP_ID, GLIDE_TABLE_NAME_COLUMN, GLIDE_TABLE_NAME, GLIDE_TABLE_DATE_TIME_COLUMN, \
-    GLIDE_TABLE_DEVICE_COLUMN, DEVICE_IDENTIFIER
-from pydantic import BaseModel, Field
 import mimetypes
 import requests
 
+from config import GLIDE_APP_ID, GLIDE_API_KEY
+from glide_api_models import StartUploadPayload, UploadSlot, CompletedUpload, TableMutation, TableMutations, \
+    ColumnValues
+
+# URLs used for contacting the API.
 MUTATE_TABLES_URL: str = 'https://api.glideapp.io/api/function/mutateTables'
 CREATE_UPLOAD_URL: str = f'https://api.glideapps.com/apps/{GLIDE_APP_ID}/uploads'
 COMPLETE_UPLOAD_URL: str = f'https://api.glideapps.com/apps/{GLIDE_APP_ID}/uploads/{{upload_id}}/complete'
+
+# Headers that will be used commonly.
 AUTHORIZATION_HEADER: tuple[str, str] = 'Authorization', f'Bearer {GLIDE_API_KEY}'
 JSON_CONTENT_TYPE_HEADER: tuple[str, str] = 'Content-Type', 'application/json'
 
+# Create the logger.
 logger = logging.getLogger('GlideAPI')
 
 
-class StartUploadPayload(BaseModel):
-    content_type: Annotated[str, Field(serialization_alias='contentType')]
-    content_length: Annotated[int, Field(serialization_alias='contentLength')]
-    file_name: Annotated[str, Field(serialization_alias='fileName')]
+def guess_content_type(path: Path) -> str:
+    content_type, _ = mimetypes.guess_type(path)
+    if content_type is None:
+        raise RuntimeError(f'Failed to guess content type for {path}')
 
-
-class UploadSlot(BaseModel):
-    data: UploadSlotData
-
-
-class UploadSlotData(BaseModel):
-    upload_id: Annotated[str, Field(alias='uploadID')]
-    upload_location: Annotated[str, Field(alias='uploadLocation')]
+    return content_type
 
 
 def create_start_upload_headers() -> dict[str, str]:
@@ -41,10 +39,8 @@ def create_start_upload_headers() -> dict[str, str]:
 
 
 def create_start_upload_json(path: Path) -> dict[str, Any]:
-    # Guess the mime type of the file.
-    content_type, _ = mimetypes.guess_type(path)
-    if content_type is None:
-        raise RuntimeError(f'Failed to guess mime-type for {path}')
+    # Guess the content type of the file.
+    content_type: str = guess_content_type(path)
 
     # Get the size of the file.
     content_length: int = path.stat().st_size
@@ -83,10 +79,8 @@ def start_upload(path: Path) -> tuple[str, str]:
 
 
 def create_upload_headers(path: Path) -> dict[str, str]:
-    # Guess the MIME type of the file that will be uploaded.
-    content_type, _ = mimetypes.guess_type(path)
-    if content_type is None:
-        raise RuntimeError(f'Failed to guess mime-type for {path}')
+    # Guess the content type of the file.
+    content_type: str = guess_content_type(path)
 
     # Return the headers.
     return {
@@ -110,15 +104,13 @@ def upload(upload_location: str, path: Path) -> None:
             f'Failed to upload {path} to location {upload_location}, status code: {response.status_code}')
 
 
-class CompletedUpload(BaseModel):
-    data: CompletedUploadData
-
-
-class CompletedUploadData(BaseModel):
-    url: str
-
-
 def complete(upload_id: str) -> str:
+    """
+    Complete the upload that has the given ID.
+    :param upload_id: The ID of the upload.
+    :return: The URL of the uploaded image.
+    """
+
     # Format the completion url.
     url: str = COMPLETE_UPLOAD_URL.format(upload_id=upload_id)
 
@@ -146,29 +138,20 @@ def complete(upload_id: str) -> str:
     return completed_upload.data.url
 
 
-class TableMutations(BaseModel):
-    app_id: Annotated[str, Field(serialization_alias='appID')] = GLIDE_APP_ID
-    mutations: list[TableMutation]
+def create_mutate_table_json(image_url: str) -> dict[str, Any]:
+    """
+    Create the JSON for mutating the table.
+    :param image_url: The URL of the image to add.
+    :return: The JSON for the table mutation.
+    """
 
+    column_values: ColumnValues = ColumnValues(
+        name=image_url,
+        date_time=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    )
 
-class TableMutation(BaseModel):
-    kind: Literal['add-row-to-table'] = 'add-row-to-table'
-    table_name: Annotated[str, Field(serialization_alias='tableName')] = GLIDE_TABLE_NAME
-    column_values: Annotated[ColumnValues, Field(serialization_alias='columnValues')]
-
-
-class ColumnValues(BaseModel):
-    name: Annotated[str, Field(serialization_alias=GLIDE_TABLE_NAME_COLUMN)]
-    date_time: Annotated[str, Field(serialization_alias=GLIDE_TABLE_DATE_TIME_COLUMN)]
-    device_id: Annotated[str, Field(serialization_alias=GLIDE_TABLE_DEVICE_COLUMN)] = DEVICE_IDENTIFIER
-
-
-def create_add_row_json(image_url: str) -> dict[str, Any]:
-    column_values = ColumnValues(name=image_url,
-                                 date_time=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
-
-    table_mutation = TableMutation(column_values=column_values)
-    table_mutations = TableMutations(mutations=[table_mutation])
+    table_mutation: TableMutation = TableMutation(column_values=column_values)
+    table_mutations: TableMutations = TableMutations(mutations=[table_mutation])
 
     return table_mutations.model_dump(by_alias=True)
 
@@ -184,7 +167,7 @@ def mutate_table(image_url: str) -> None:
     headers.update([AUTHORIZATION_HEADER, JSON_CONTENT_TYPE_HEADER])
 
     # Create the request JSON.
-    json: dict[str, Any] = create_add_row_json(image_url)
+    json: dict[str, Any] = create_mutate_table_json(image_url)
 
     # Send the request.
     logger.info(f'Sending table mutation request with body {json}')

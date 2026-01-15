@@ -3,7 +3,7 @@ from pathlib import Path
 
 # Read the configuration.
 config = configparser.ConfigParser()
-config.read(['/etc/camera-connect/config.ini', '~/.config/camera-connect/config.ini', 'config.ini'])
+config.read(['/etc/camera-connect/config.ini', 'config.ini'])
 
 # General configuration.
 SPOOL_PATH: Path = Path(config.get('General', 'SpoolPath'))
