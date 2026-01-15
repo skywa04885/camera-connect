@@ -1,5 +1,4 @@
 from threading import Event, Thread
-import signal
 import logging
 from snapshotter import snapshotter
 from triggerer import triggerer
@@ -13,15 +12,6 @@ def main() -> None:
     # Create the shutdown and snapshot events.
     shutdown: Event = Event()
     snapshot: Event = Event()
-
-    # Define the signal handler.
-    def signal_handler(signum: int, _) -> None:
-        # Set the shutdown event if the script was interrupted.
-        if signum == signal.SIGINT:
-            shutdown.set()
-
-    # Listen for the shutdown signal.
-    signal.signal(signal.SIGINT, signal_handler)
 
     # Create the threads for all the workers.
     threads: list[Thread] = [
