@@ -9,7 +9,7 @@ import evdev
 import signal
 import logging
 from config import SPOOL_PATH, WEBCAM_URL
-from glideapi import create_upload, upload, complete, mutate_table
+from glideapi import start_upload, upload, complete, mutate_table
 
 def upload_snapshots(shutdown: Event) -> None:
     logger = logging.getLogger('Snapshot uploader')
@@ -24,7 +24,7 @@ def upload_snapshots(shutdown: Event) -> None:
 
         for file_path in sorted_file_paths:
             logger.info(f'Creating upload for file {file_path}')
-            upload_id, upload_location = create_upload(file_path)
+            upload_id, upload_location = start_upload(file_path)
 
             logger.info(f'Uploading file {file_path} to {upload_location} for update {upload_id}')
             upload(upload_location, file_path)

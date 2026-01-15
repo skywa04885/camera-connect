@@ -10,11 +10,17 @@ import requests
 
 MUTATE_TABLES_URL: str = 'https://api.glideapp.io/api/function/mutateTables'
 CREATE_UPLOAD_URL: str = f'https://api.glideapps.com/apps/{GLIDE_APP_ID}/uploads'
-COMPLETE_UPLOAD_URL: str =f'https://api.glideapps.com/apps/{GLIDE_APP_ID}/uploads/{{upload_id}}/complete'
+COMPLETE_UPLOAD_URL: str = f'https://api.glideapps.com/apps/{GLIDE_APP_ID}/uploads/{{upload_id}}/complete'
 AUTHORIZATION_HEADER: tuple[str, str] = 'Authorization', f'Bearer {GLIDE_API_KEY}'
 JSON_CONTENT_TYPE_HEADER: tuple[str, str] = 'Content-Type', 'application/json'
 
 logger = logging.getLogger('GlideAPI')
+
+
+class StartUploadPayload(BaseModel):
+    content_type: Annotated[str, Field(serialization_alias='contentType')]
+    content_length: Annotated[int, Field(serialization_alias='contentLength')]
+    file_name: Annotated[str, Field(serialization_alias='fileName')]
 
 
 class UploadSlot(BaseModel):
@@ -26,49 +32,82 @@ class UploadSlotData(BaseModel):
     upload_location: Annotated[str, Field(alias='uploadLocation')]
 
 
-def create_upload(path: Path) -> tuple[str, str]:
-    content_type, _ = mimetypes.guess_type(path)
-    content_length = path.stat().st_size
-    assert content_type is not None
-
+def create_start_upload_headers() -> dict[str, str]:
     headers: dict[str, str] = {}
+
     headers.update([AUTHORIZATION_HEADER, JSON_CONTENT_TYPE_HEADER])
 
-    json: dict[str, str] = {
-        'contentType': content_type,
-        'contentLength': content_length,
-        'fileName': path.name
-    }
-
-    response = requests.post(CREATE_UPLOAD_URL, headers=headers, json=json)
-    assert response.status_code == 200
-
-    json = response.json()
-
-    data = json['data']
-    assert isinstance(data, dict)
-
-    upload_id = data['uploadID']
-    assert isinstance(upload_id, str)
-
-    upload_location = data['uploadLocation']
-    assert isinstance(upload_location, str)
-
-    return upload_id, upload_location
+    return headers
 
 
-def upload(upload_location: str, path: Path) -> None:
+def create_start_upload_json(path: Path) -> dict[str, Any]:
+    # Guess the mime type of the file.
     content_type, _ = mimetypes.guess_type(path)
-    assert content_type is not None
+    if content_type is None:
+        raise RuntimeError(f'Failed to guess mime-type for {path}')
 
-    headers: dict[str, str] = {
+    # Get the size of the file.
+    content_length: int = path.stat().st_size
+
+    # Create the payload of the upload request.
+    payload: StartUploadPayload = StartUploadPayload(content_type=content_type, content_length=content_length,
+                                                     file_name=path.name)
+
+    # Dump the payload as JSON.
+    return payload.model_dump(by_alias=True)
+
+
+def start_upload(path: Path) -> tuple[str, str]:
+    # Create the start upload headers.
+    headers: dict[str, str] = create_start_upload_headers()
+
+    # Create the start upload JSON.
+    json: dict[str, str] = create_start_upload_json(path)
+
+    # Send the request.
+    response: requests.Response = requests.post(CREATE_UPLOAD_URL, headers=headers, json=json)
+
+    # Make sure the upload was successful.
+    if response.status_code != 200:
+        logger.error(f'Failed to create upload for {path}, status code: {response.status_code}')
+        raise RuntimeError(f'Failed to create upload for {path}, status code: {response.status_code}')
+
+    # Get the JSON from the response.
+    json: dict[str, Any] = response.json()
+
+    # Validate the response into the upload slot.
+    upload_slot: UploadSlot = UploadSlot.model_validate(json)
+
+    # Return the upload ID upload location.
+    return upload_slot.data.upload_id, upload_slot.data.upload_location
+
+
+def create_upload_headers(path: Path) -> dict[str, str]:
+    # Guess the MIME type of the file that will be uploaded.
+    content_type, _ = mimetypes.guess_type(path)
+    if content_type is None:
+        raise RuntimeError(f'Failed to guess mime-type for {path}')
+
+    # Return the headers.
+    return {
         'Content-Type': content_type
     }
 
-    with path.open('rb') as file:
-        response = requests.put(upload_location, file, headers=headers)
 
-    assert response.status_code == 200
+def upload(upload_location: str, path: Path) -> None:
+    # Create the headers for the upload.
+    headers: dict[str, str] = create_upload_headers(path)
+
+    # Send the request.
+    with path.open('rb') as file:
+        logger.info(f'Uploading file {path} to location {upload_location}')
+        response: requests.Response = requests.put(upload_location, file, headers=headers)
+
+    # Make sure the upload was successful.
+    if response.status_code != 200:
+        logger.error(f'Failed to upload {path} to location {upload_location}, status code: {response.status_code}')
+        raise RuntimeError(
+            f'Failed to upload {path} to location {upload_location}, status code: {response.status_code}')
 
 
 class CompletedUpload(BaseModel):
@@ -90,9 +129,12 @@ def complete(upload_id: str) -> str:
     # Send the complete upload request.
     logger.info(f'Sending complete upload request for upload {upload_id}')
     response = requests.post(url, headers=headers)
+
+    # Make sure the request was successful.
     if response.status_code != 200:
         logger.error(f'Complete upload request failed for upload {upload_id}, status code: {response.status_code}')
-        raise RuntimeError(f'Complete upload request failed for upload {upload_id}, status code: {response.status_code}')
+        raise RuntimeError(
+            f'Complete upload request failed for upload {upload_id}, status code: {response.status_code}')
 
     # Get the response JSON.
     json = response.json()
@@ -132,6 +174,11 @@ def create_add_row_json(image_url: str) -> dict[str, Any]:
 
 
 def mutate_table(image_url: str) -> None:
+    """
+    Mutate the table by adding the given image.
+    :param image_url: The URL of the image to add.
+    """
+
     # Create the request headers.
     headers: dict[str, str] = {}
     headers.update([AUTHORIZATION_HEADER, JSON_CONTENT_TYPE_HEADER])
@@ -142,6 +189,8 @@ def mutate_table(image_url: str) -> None:
     # Send the request.
     logger.info(f'Sending table mutation request with body {json}')
     response: requests.Response = requests.post(MUTATE_TABLES_URL, headers=headers, json=json)
+
+    # Make sure the request was successful.
     if response.status_code != 200:
         logger.error(f'Table mutation request failed, status code: {response.status_code}')
         raise RuntimeError(f'Table mutation request failed, status code: {response.status_code}')
