@@ -6,11 +6,6 @@ if ! id camera-connect >/dev/null 2>&1; then
     useradd --system --home /var/lib/camera-connect --shell /usr/sbin/nologin camera-connect
 fi
 
-# Create user config
-if [ ! -f /etc/camera-connect/config.ini ]; then
-    cp /etc/camera-connect/config.ini /usr/share/camera-connect/config.ini
-fi
-
 mkdir -p /var/lib/camera-connect
 chown camera-connect:camera-connect /var/lib/camera-connect
 

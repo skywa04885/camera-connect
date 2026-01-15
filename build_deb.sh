@@ -12,11 +12,13 @@ rm -rf "$PKG"
 mkdir -p "./out"
 mkdir -p "$PKG/DEBIAN"
 mkdir -p "$PKG/usr/bin"
-mkdir -p "$PKG/etc/systemd/system"
+mkdir -p "$PKG/lib/systemd/system"
 mkdir -p "$PKG/etc/camera-connect"
-mkdir -p "$PKG/var/lib/camera-connect"
+mkdir -p "$PKG/usr/share/camera-connect"
 
 # Config
+cp packaging/deb/conffiles "$PKG/DEBIAN/conffiles"
+cp packaging/deb/config.ini "$PKG/usr/share/camera-connect/config.ini"
 cp packaging/deb/config.ini "$PKG/etc/camera-connect/config.ini"
 
 # Binary
@@ -24,7 +26,7 @@ cp dist/camera-connect "$PKG/usr/bin/camera-connect"
 chmod 755 "$PKG/usr/bin/camera-connect"
 
 # Service
-cp packaging/deb/camera-connect.service "$PKG/etc/systemd/system/"
+cp packaging/deb/camera-connect.service "$PKG/lib/systemd/system/"
 
 # Control
 sed "s/@VERSION@/$VERSION/" packaging/deb/control.in > "$PKG/DEBIAN/control"
