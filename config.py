@@ -5,6 +5,9 @@ from pathlib import Path
 config = configparser.ConfigParser()
 config.read(['/etc/camera-connect/config.ini', 'config.ini'])
 
+# Trigger configuration.
+KEY_CODE: int = config.getint('Trigger', 'KeyCode')
+
 # General configuration.
 SPOOL_PATH: Path = Path(config.get('General', 'SpoolPath'))
 WEBCAM_URL: str = config.get('General', 'WebcamURL', fallback='<video0>')
