@@ -4,7 +4,7 @@ from evdev import InputDevice
 import evdev
 import logging
 
-from config import KEY_CODE
+from config import KEY_CODE, GRAB
 
 logger: logging.Logger = logging.getLogger('Triggerer')
 
@@ -29,6 +29,10 @@ def triggerer(shutdown: Event, snapshot: Event) -> None:
         if KEY_CODE not in keys:
             logger.info(f'Skipping input device {device.name} on {path} due to absence of {evdev.ecodes.KEY[KEY_CODE]}')
             continue
+
+        # Grab the input device to prevent its keys from being put into the TTY.
+        if GRAB:
+            device.grab()
 
         # Register the device in the selector.
         logger.info(f'Listening input device {device.name} on {path}')

@@ -7,6 +7,7 @@ config.read(['/etc/camera-connect/config.ini', 'config.ini'])
 
 # Trigger configuration.
 KEY_CODE: int = config.getint('Trigger', 'KeyCode')
+GRAB: bool = config.getboolean('Trigger', 'Grab')
 
 # General configuration.
 SPOOL_PATH: Path = Path(config.get('General', 'SpoolPath'))
