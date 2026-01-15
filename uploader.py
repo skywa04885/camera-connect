@@ -3,6 +3,9 @@ from pathlib import Path
 from threading import Event
 from typing import Optional
 
+import requests.exceptions
+from requests import RequestException
+
 from config import SPOOL_PATH
 from glide_api import start_upload, upload_file, complete_upload, mutate_table
 from time import sleep
@@ -27,7 +30,7 @@ def uploader(shutdown: Event) -> None:
         # Get the pending file path, as long as it is not available, wait,
         file_path: Optional[Path] = get_pending_snapshot()
         if not file_path:
-            sleep(0.1)
+            shutdown.wait(0.1)
             continue
 
         # Try to perform the upload.
@@ -47,10 +50,9 @@ def uploader(shutdown: Event) -> None:
             # Mutate the table.
             logger.info(f'Mutating table to add {url}')
             mutate_table(url)
-        except RuntimeError as error:
-            traceback.print_exc()
+        except RequestException, RuntimeError:
             logger.error(f'Failed to perform upload of file {file_path}, retrying in 20 seconds.')
-            sleep(20.0)
+            shutdown.wait(20.0)
             continue
 
         # Remove the snapshot.
