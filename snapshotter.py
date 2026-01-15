@@ -8,7 +8,7 @@ from config import SPOOL_PATH, WEBCAM_URL
 import imageio.v3 as iio
 import logging
 
-from play import play
+from audio_player import play
 
 logger: logging.Logger = logging.getLogger('Snapshotter')
 
