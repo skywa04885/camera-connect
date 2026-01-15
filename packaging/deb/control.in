@@ -3,6 +3,9 @@ Version: @VERSION@
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends: libc6
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ alsa-utils
 Maintainer: Luke Rieff <luke.rieff@gmail.com>
 Description: Camera Connect

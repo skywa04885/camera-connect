@@ -23,7 +23,10 @@ jobs:
             build-essential \
             devscripts \
             debhelper \
-            fakeroot
+            fakeroot \
+            libasound2 \
+            libasound2-dev \
+            alsa-utils
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
