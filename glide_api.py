@@ -88,7 +88,7 @@ def create_upload_headers(path: Path) -> dict[str, str]:
     }
 
 
-def upload(upload_location: str, path: Path) -> None:
+def upload_file(upload_location: str, path: Path) -> None:
     # Create the headers for the upload.
     headers: dict[str, str] = create_upload_headers(path)
 
@@ -104,7 +104,7 @@ def upload(upload_location: str, path: Path) -> None:
             f'Failed to upload {path} to location {upload_location}, status code: {response.status_code}')
 
 
-def complete(upload_id: str) -> str:
+def complete_upload(upload_id: str) -> str:
     """
     Complete the upload that has the given ID.
     :param upload_id: The ID of the upload.
