@@ -219,3 +219,4 @@ spool/
 out/
 
 .pkg-deb/
+config.ini
