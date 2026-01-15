@@ -1,14 +1,9 @@
-import traceback
 from pathlib import Path
 from threading import Event
 from typing import Optional
-
-import requests.exceptions
 from requests import RequestException
-
 from config import SPOOL_PATH
 from glide_api import start_upload, upload_file, complete_upload, mutate_table
-from time import sleep
 import logging
 
 logger: logging.Logger = logging.getLogger('Snapshot uploader')
@@ -23,6 +18,7 @@ def get_pending_snapshot() -> Optional[Path]:
 
     # Return the oldest pending snapshot.
     return None if len(sorted_file_paths) == 0 else sorted_file_paths[0]
+
 
 def uploader(shutdown: Event) -> None:
     # Stay uploading as long as the shut-down event is not set.
