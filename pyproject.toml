@@ -7,6 +7,7 @@ dependencies = [
     "evdev>=1.9.2",
     "imageio>=2.37.2",
     "imageio-ffmpeg>=0.6.0",
+    "pyalsaaudio>=0.11.0",
     "pydantic>=2.12.5",
     "pyinstaller>=6.18.0",
     "requests>=2.32.5",

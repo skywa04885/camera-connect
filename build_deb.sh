@@ -29,7 +29,11 @@ ARCH=$(dpkg --print-architecture)
 ROOT=$(pwd)
 PKG="$ROOT/.pkg-deb"
 
-uv run pyinstaller --onefile --copy-metadata imageio ./main.py --name camera-connect
+uv run pyinstaller --onefile \
+  --copy-metadata imageio \
+  --name camera-connect \
+  --add-data snapshot.wav:. \
+  main.py
 
 rm -rf "$PKG"
 mkdir -p "./out"

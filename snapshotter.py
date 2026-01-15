@@ -1,16 +1,20 @@
 from pathlib import Path
 from threading import Event
 from uuid import uuid4
+
+from alsaaudio import ALSAAudioError
+
+from config import SPOOL_PATH, WEBCAM_URL
 import imageio.v3 as iio
 import logging
-from config import SPOOL_PATH, WEBCAM_URL
+
+from play import play
 
 logger: logging.Logger = logging.getLogger('Snapshotter')
 
 
 def generate_snapshot_path() -> Path:
     return SPOOL_PATH / f'{uuid4()}.jpg'
-
 
 def snapshotter(shutdown: Event, snapshot: Event) -> None:
     # Stream the frames from the webcam until stopped.
@@ -29,6 +33,12 @@ def snapshotter(shutdown: Event, snapshot: Event) -> None:
         logger.info(f'Writing snapshot to {path}')
         iio.imwrite(path, frame)
         logger.info(f'Wrote snapshot to {path}')
+
+        # Play the audio.
+        try:
+            play('snapshot.wav')
+        except ALSAAudioError as error:
+            logger.warning(f'Failed to play audio {error}')
 
         # Clear the snapshot event since it has been taken.
         snapshot.clear()
