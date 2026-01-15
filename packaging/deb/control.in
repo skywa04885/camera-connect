@@ -3,9 +3,6 @@ Version: @VERSION@
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends:
- ${shlibs:Depends},
- ${misc:Depends},
- alsa-utils
+Depends: libasound2t64, libasound2, alsa-utils
 Maintainer: Luke Rieff <luke.rieff@gmail.com>
 Description: Camera Connect
