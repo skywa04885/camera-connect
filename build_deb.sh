@@ -1,8 +1,31 @@
 #!/usr/bin/env bash
 set -e
 
-VERSION=1.0.0
-ARCH=amd64
+# 1) CI override (optional)
+if [[ -n "${GITHUB_REF_NAME:-}" ]]; then
+  VERSION="${GITHUB_REF_NAME#v}"
+
+# 2) Git tag exists
+elif git describe --tags --abbrev=0 >/dev/null 2>&1; then
+  TAG=$(git describe --tags --abbrev=0)
+  TAG="${TAG#v}"
+
+  # commits since tag
+  COMMITS=$(git rev-list "${TAG}..HEAD" --count)
+
+  if [[ "$COMMITS" -eq 0 ]]; then
+    VERSION="$TAG"
+  else
+    VERSION="${TAG}+git${COMMITS}"
+  fi
+
+# 3) No tags at all
+else
+  SHA=$(git rev-parse --short HEAD)
+  VERSION="0.0.0+git${SHA}"
+fi
+
+ARCH=$(dpkg --print-architecture)
 ROOT=$(pwd)
 PKG="$ROOT/.pkg-deb"
 
