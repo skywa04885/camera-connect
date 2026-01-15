@@ -1,0 +1,12 @@
+[project]
+name = "camera-connect"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.14"
+dependencies = [
+    "evdev>=1.9.2",
+    "imageio>=2.37.2",
+    "imageio-ffmpeg>=0.6.0",
+    "pydantic>=2.12.5",
+    "requests>=2.32.5",
+]
