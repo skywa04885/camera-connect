@@ -1,0 +1,15 @@
+[Unit]
+Description=Camera Connect Service
+After=network.target sound.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/camera-connect
+Restart=always
+RestartSec=5
+User=camera-connect
+Group=camera-connect
+WorkingDirectory=/var/lib/camera-connect
+
+[Install]
+WantedBy=multi-user.target

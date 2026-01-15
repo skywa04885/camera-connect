@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+systemctl stop camera-connect.service || true
+systemctl disable camera-connect.service || true
+systemctl daemon-reload
+
+exit 0

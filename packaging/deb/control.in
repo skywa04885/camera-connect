@@ -1,0 +1,8 @@
+Package: camera-connect
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: amd64
+Depends: libc6
+Maintainer: Luke Rieff <luke.rieff@gmail.com>
+Description: Camera Connect
