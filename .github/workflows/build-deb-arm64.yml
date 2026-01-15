@@ -24,7 +24,7 @@ jobs:
             devscripts \
             debhelper \
             fakeroot \
-            libasound2 \
+            libasound2t64 \
             libasound2-dev \
             alsa-utils
       - name: Install uv
