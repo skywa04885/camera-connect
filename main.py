@@ -34,6 +34,12 @@ def main() -> None:
     for thread in threads:
         thread.start()
 
+    # Handle keyboard interrupt too (to prevent packaging issues).
+    try:
+        shutdown.wait()
+    except KeyboardInterrupt:
+        shutdown.set()
+
     # Wait for all the threads to finish execution.
     for thread in threads:
         thread.join()
