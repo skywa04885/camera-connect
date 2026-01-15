@@ -23,7 +23,8 @@ jobs:
             build-essential \
             devscripts \
             debhelper \
-            fakeroot
+            fakeroot \
+          curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Ensure build script is executable
         run: chmod +x ./build_deb.sh
