@@ -18,8 +18,6 @@ DEVICE_IDENTIFIER: str = config.get('General', 'DeviceIdentifier')
 GLIDE_API_KEY: str = config.get('Glide', 'APIKey')
 GLIDE_APP_ID: str = config.get('Glide', 'AppID')
 
-# Glide table configuration
-GLIDE_TABLE_NAME: str = config.get('Glide.Table', 'TableName')
-GLIDE_TABLE_NAME_COLUMN: str = config.get('Glide.Table', 'NameColumn')
-GLIDE_TABLE_DATE_TIME_COLUMN: str = config.get('Glide.Table', 'DateTimeColumn')
-GLIDE_TABLE_DEVICE_COLUMN: str = config.get('Glide.Table', 'DeviceColumn')
+# Webhook configuration.
+WEBHOOK_URL: str = config.get('Webhook', 'URL')
+WEBHOOK_TOKEN: str = config.get('Webhook', 'Token')

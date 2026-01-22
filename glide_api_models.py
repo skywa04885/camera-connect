@@ -1,7 +1,5 @@
-from typing import Annotated, Literal
+from typing import Annotated
 from pydantic import BaseModel, Field
-from config import GLIDE_APP_ID, GLIDE_TABLE_NAME_COLUMN, GLIDE_TABLE_NAME, GLIDE_TABLE_DATE_TIME_COLUMN, \
-    GLIDE_TABLE_DEVICE_COLUMN, DEVICE_IDENTIFIER
 
 
 class StartUploadPayload(BaseModel):
@@ -25,20 +23,3 @@ class CompletedUpload(BaseModel):
 
 class CompletedUploadData(BaseModel):
     url: str
-
-
-class TableMutations(BaseModel):
-    app_id: Annotated[str, Field(serialization_alias='appID')] = GLIDE_APP_ID
-    mutations: list[TableMutation]
-
-
-class TableMutation(BaseModel):
-    kind: Literal['add-row-to-table'] = 'add-row-to-table'
-    table_name: Annotated[str, Field(serialization_alias='tableName')] = GLIDE_TABLE_NAME
-    column_values: Annotated[ColumnValues, Field(serialization_alias='columnValues')]
-
-
-class ColumnValues(BaseModel):
-    name: Annotated[str, Field(serialization_alias=GLIDE_TABLE_NAME_COLUMN)]
-    date_time: Annotated[str, Field(serialization_alias=GLIDE_TABLE_DATE_TIME_COLUMN)]
-    device_id: Annotated[str, Field(serialization_alias=GLIDE_TABLE_DEVICE_COLUMN)] = DEVICE_IDENTIFIER

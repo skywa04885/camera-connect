@@ -3,7 +3,7 @@ from threading import Event
 from typing import Optional
 from requests import RequestException
 from config import SPOOL_PATH
-from glide_api import start_upload, upload_file, complete_upload, mutate_table
+from glide_api import start_upload, upload_file, complete_upload, trigger_webhook
 import logging
 
 logger: logging.Logger = logging.getLogger('Snapshot uploader')
@@ -45,7 +45,7 @@ def uploader(shutdown: Event) -> None:
 
             # Mutate the table.
             logger.info(f'Mutating table to add {url}')
-            mutate_table(url)
+            trigger_webhook(url)
         except RequestException, RuntimeError:
             logger.error(f'Failed to perform upload of file {file_path}, retrying in 20 seconds.')
             shutdown.wait(20.0)

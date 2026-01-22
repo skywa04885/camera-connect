@@ -5,9 +5,8 @@ from datetime import datetime, timezone
 import mimetypes
 import requests
 
-from config import GLIDE_APP_ID, GLIDE_API_KEY
-from glide_api_models import StartUploadPayload, UploadSlot, CompletedUpload, TableMutation, TableMutations, \
-    ColumnValues
+from config import GLIDE_APP_ID, GLIDE_API_KEY, WEBHOOK_URL, WEBHOOK_TOKEN
+from glide_api_models import StartUploadPayload, UploadSlot, CompletedUpload
 
 # URLs used for contacting the API.
 MUTATE_TABLES_URL: str = 'https://api.glideapp.io/api/function/mutateTables'
@@ -16,7 +15,9 @@ COMPLETE_UPLOAD_URL: str = f'https://api.glideapps.com/apps/{GLIDE_APP_ID}/uploa
 
 # Headers that will be used commonly.
 AUTHORIZATION_HEADER: tuple[str, str] = 'Authorization', f'Bearer {GLIDE_API_KEY}'
+WEBHOOK_AUTHORIZATION_HEADER: tuple[str, str] = 'Authorization', f'Bearer {WEBHOOK_TOKEN}'
 JSON_CONTENT_TYPE_HEADER: tuple[str, str] = 'Content-Type', 'application/json'
+TEXT_CONTENT_TYPE_HEADER: tuple[str, str] = 'Content-Type', 'text/plain'
 
 # Create the logger.
 logger = logging.getLogger('GlideAPI')
@@ -138,42 +139,17 @@ def complete_upload(upload_id: str) -> str:
     return completed_upload.data.url
 
 
-def create_mutate_table_json(image_url: str) -> dict[str, Any]:
-    """
-    Create the JSON for mutating the table.
-    :param image_url: The URL of the image to add.
-    :return: The JSON for the table mutation.
-    """
-
-    column_values: ColumnValues = ColumnValues(
-        name=image_url,
-        date_time=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    )
-
-    table_mutation: TableMutation = TableMutation(column_values=column_values)
-    table_mutations: TableMutations = TableMutations(mutations=[table_mutation])
-
-    return table_mutations.model_dump(by_alias=True)
-
-
-def mutate_table(image_url: str) -> None:
-    """
-    Mutate the table by adding the given image.
-    :param image_url: The URL of the image to add.
-    """
-
-    # Create the request headers.
+def trigger_webhook(image_url: str) -> None:
+    # Create the headers for the webhook.
     headers: dict[str, str] = {}
-    headers.update([AUTHORIZATION_HEADER, JSON_CONTENT_TYPE_HEADER])
-
-    # Create the request JSON.
-    json: dict[str, Any] = create_mutate_table_json(image_url)
+    headers.update([WEBHOOK_AUTHORIZATION_HEADER, TEXT_CONTENT_TYPE_HEADER])
 
     # Send the request.
-    logger.info(f'Sending table mutation request with body {json}')
-    response: requests.Response = requests.post(MUTATE_TABLES_URL, headers=headers, json=json)
+    logger.info(f'Triggering webhook with image url {image_url}')
+    response = requests.post(WEBHOOK_URL, headers=headers, data=image_url)
 
     # Make sure the request was successful.
     if response.status_code != 200:
-        logger.error(f'Table mutation request failed, status code: {response.status_code}')
-        raise RuntimeError(f'Table mutation request failed, status code: {response.status_code}')
+        logger.error(f'Webhook trigger for image url {image_url} failed, status code: {response.status_code}')
+        raise RuntimeError(
+            f'Webhook trigger for image url {image_url} failed, status code: {response.status_code}')
