@@ -2,7 +2,7 @@ Package: camera-connect
 Version: @VERSION@
 Section: utils
 Priority: optional
-Architecture: amd64
+Architecture: arm64
 Depends: libasound2t64, libasound2, alsa-utils
 Maintainer: Luke Rieff <luke.rieff@gmail.com>
 Description: Camera Connect
