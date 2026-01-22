@@ -14,7 +14,7 @@ def triggerer(shutdown: Event, snapshot: Event) -> None:
     selector: DefaultSelector = DefaultSelector()
 
     # Find all the input devices supporting the desired key.
-    logger.info(f'Finding all input devices supporting key {evdev.ecodes.KEY[KEY_CODE]}')
+    logger.info(f'Finding all input devices supporting key {evdev.ecodes.KEY[KEY_CODE] if KEY_CODE in evdev.ecodes.KEY else KEY_CODE}')
     for path in evdev.list_devices():
         device = InputDevice(path)
 
@@ -27,7 +27,7 @@ def triggerer(shutdown: Event, snapshot: Event) -> None:
         # Get the supported keys of the device, if the desired key is not supported, skip it.
         keys = capabilities[evdev.ecodes.EV_KEY]
         if KEY_CODE not in keys:
-            logger.info(f'Skipping input device {device.name} on {path} due to absence of {evdev.ecodes.KEY[KEY_CODE]}')
+            logger.info(f'Skipping input device {device.name} on {path} due to absence of {evdev.ecodes.KEY[KEY_CODE] if KEY_CODE in evdev.ecodes.KEY else KEY_CODE}')
             continue
 
         # Grab the input device to prevent its keys from being put into the TTY.
@@ -47,7 +47,7 @@ def triggerer(shutdown: Event, snapshot: Event) -> None:
             for event in device.read():
                 if event.code == KEY_CODE and event.value == 1:
                     logger.info(
-                        f'The trigger key {evdev.ecodes.KEY[KEY_CODE]} has been pressed, setting snapshot event')
+                        f'The trigger key {evdev.ecodes.KEY[KEY_CODE] if KEY_CODE in evdev.ecodes.KEY else KEY_CODE} has been pressed, setting snapshot event')
                     snapshot.set()
 
     logger.info('Shut down')
