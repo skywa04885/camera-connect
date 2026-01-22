@@ -5,6 +5,8 @@ from pathlib import Path
 
 import alsaaudio
 
+from config import AUDIO_DEVICE
+
 PERIOD_SIZE: int = 2048
 
 
@@ -36,6 +38,7 @@ def play(file: str) -> None:
 
         # Create the PCM.
         device: alsaaudio.PCM = alsaaudio.PCM(
+            device=AUDIO_DEVICE,
             channels=channels,
             rate=rate,
             format=file_format,

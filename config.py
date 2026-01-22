@@ -12,7 +12,7 @@ GRAB: bool = config.getboolean('Trigger', 'Grab')
 # General configuration.
 SPOOL_PATH: Path = Path(config.get('General', 'SpoolPath'))
 WEBCAM_URL: str = config.get('General', 'WebcamURL', fallback='<video0>')
-DEVICE_IDENTIFIER: str = config.get('General', 'DeviceIdentifier')
+AUDIO_DEVICE: str = config.get('General', 'AudioDevice', fallback='default')
 
 # Glide configuration
 GLIDE_API_KEY: str = config.get('Glide', 'APIKey')
