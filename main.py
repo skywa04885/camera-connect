@@ -1,3 +1,4 @@
+from queue import Queue
 from threading import Event, Thread
 from snapshotter import snapshotter
 from triggerer import triggerer
@@ -12,7 +13,7 @@ def main() -> None:
 
     # Create the shutdown and snapshot events.
     shutdown: Event = Event()
-    snapshot: Event = Event()
+    snapshot_queue: Queue[str] = Queue(0)
 
     # Create the signal handler.
     def signal_handler(code: int, _) -> None:
@@ -25,8 +26,8 @@ def main() -> None:
     # Create the threads for all the workers.
     threads: list[Thread] = [
         Thread(target=uploader, args=(shutdown,)),
-        Thread(target=snapshotter, args=(shutdown, snapshot)),
-        Thread(target=triggerer, args=(shutdown, snapshot))
+        Thread(target=snapshotter, args=(shutdown, snapshot_queue)),
+        Thread(target=triggerer, args=(shutdown, snapshot_queue))
     ]
 
     # Start all the threads.

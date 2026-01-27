@@ -1,5 +1,7 @@
 from pathlib import Path
+from queue import Queue
 from threading import Event
+from _queue import Empty
 from uuid import uuid4
 
 from alsaaudio import ALSAAudioError
@@ -13,21 +15,24 @@ from audio_player import play
 logger: logging.Logger = logging.getLogger('Snapshotter')
 
 
-def generate_snapshot_path() -> Path:
-    return SPOOL_PATH / f'{uuid4()}.jpg'
+def generate_snapshot_path(key_label: str) -> Path:
+    return SPOOL_PATH / f'{uuid4()}-{key_label}.jpg'
 
-def snapshotter(shutdown: Event, snapshot: Event) -> None:
+def snapshotter(shutdown: Event, snapshot_queue: Queue[str]) -> None:
     # Stream the frames from the webcam until stopped.
     for _, frame in enumerate(iio.imiter(WEBCAM_URL)):
         # Shut the snapshotter down if the shutdown flag is set.
         if shutdown.is_set():
             break
-        # Discard the frame if no snapshot should be taken.
-        elif not snapshot.is_set():
+
+        # In case a snapshot should be taken, get the key label, otherwise discard the frame.
+        try:
+            key_label: str = snapshot_queue.get_nowait()
+        except Empty:
             continue
 
         # Generate the path for the snapshot.
-        path: Path = generate_snapshot_path()
+        path: Path = generate_snapshot_path(key_label)
 
         # Write the snapshot to the path.
         logger.info(f'Writing snapshot to {path}')
@@ -39,9 +44,6 @@ def snapshotter(shutdown: Event, snapshot: Event) -> None:
             play('snapshot.wav')
         except ALSAAudioError as error:
             logger.warning(f'Failed to play audio {error}')
-
-        # Clear the snapshot event since it has been taken.
-        snapshot.clear()
 
     # Inform that the snapshotter is being shut down.
     logger.info('Shut down')
