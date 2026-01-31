@@ -23,3 +23,9 @@ class CompletedUpload(BaseModel):
 
 class CompletedUploadData(BaseModel):
     url: str
+
+
+class WebhookData(BaseModel):
+    image_url: Annotated[str, Field(serialization_alias='imageUrl')]
+    label: str
+

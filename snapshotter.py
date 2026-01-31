@@ -16,7 +16,7 @@ logger: logging.Logger = logging.getLogger('Snapshotter')
 
 
 def generate_snapshot_path(key_label: str) -> Path:
-    return SPOOL_PATH / f'{uuid4()}-{key_label}.jpg'
+    return SPOOL_PATH / f'{uuid4()}:{key_label}.jpg'
 
 def snapshotter(shutdown: Event, snapshot_queue: Queue[str]) -> None:
     # Stream the frames from the webcam until stopped.

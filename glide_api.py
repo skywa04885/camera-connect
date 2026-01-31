@@ -6,7 +6,7 @@ import mimetypes
 import requests
 
 from config import GLIDE_APP_ID, GLIDE_API_KEY, WEBHOOK_URL, WEBHOOK_TOKEN
-from glide_api_models import StartUploadPayload, UploadSlot, CompletedUpload
+from glide_api_models import StartUploadPayload, UploadSlot, CompletedUpload, WebhookData
 
 # URLs used for contacting the API.
 MUTATE_TABLES_URL: str = 'https://api.glideapp.io/api/function/mutateTables'
@@ -17,7 +17,6 @@ COMPLETE_UPLOAD_URL: str = f'https://api.glideapps.com/apps/{GLIDE_APP_ID}/uploa
 AUTHORIZATION_HEADER: tuple[str, str] = 'Authorization', f'Bearer {GLIDE_API_KEY}'
 WEBHOOK_AUTHORIZATION_HEADER: tuple[str, str] = 'Authorization', f'Bearer {WEBHOOK_TOKEN}'
 JSON_CONTENT_TYPE_HEADER: tuple[str, str] = 'Content-Type', 'application/json'
-TEXT_CONTENT_TYPE_HEADER: tuple[str, str] = 'Content-Type', 'text/plain'
 
 # Create the logger.
 logger = logging.getLogger('GlideAPI')
@@ -139,14 +138,20 @@ def complete_upload(upload_id: str) -> str:
     return completed_upload.data.url
 
 
-def trigger_webhook(image_url: str) -> None:
+def trigger_webhook(image_url: str, label: str) -> None:
+    # Create the data that is sent to the webhook.
+    data: WebhookData = WebhookData(image_url=image_url, label=label)
+
+    # JSON from the data.
+    json: dict[str, Any] = data.model_dump(by_alias=True)
+
     # Create the headers for the webhook.
     headers: dict[str, str] = {}
-    headers.update([WEBHOOK_AUTHORIZATION_HEADER, TEXT_CONTENT_TYPE_HEADER])
+    headers.update([WEBHOOK_AUTHORIZATION_HEADER, JSON_CONTENT_TYPE_HEADER])
 
     # Send the request.
     logger.info(f'Triggering webhook with image url {image_url}')
-    response = requests.post(WEBHOOK_URL, headers=headers, data=image_url)
+    response = requests.post(WEBHOOK_URL, headers=headers, json=json)
 
     # Make sure the request was successful.
     if response.status_code != 200:

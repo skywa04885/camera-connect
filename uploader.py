@@ -29,6 +29,9 @@ def uploader(shutdown: Event) -> None:
             shutdown.wait(0.1)
             continue
 
+        # Get the key label from the path.
+        label: str = file_path.name.split(':')[1].split('.')[0]
+
         # Try to perform the upload.
         try:
             # Start the upload.
@@ -44,8 +47,8 @@ def uploader(shutdown: Event) -> None:
             url: str = complete_upload(upload_id)
 
             # Mutate the table.
-            logger.info(f'Mutating table to add {url}')
-            trigger_webhook(url)
+            logger.info(f'Triggering webhook with url={url} and label={label}')
+            trigger_webhook(url, label)
         except RequestException, RuntimeError:
             logger.error(f'Failed to perform upload of file {file_path}, retrying in 20 seconds.')
             shutdown.wait(20.0)
